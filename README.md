@@ -102,5 +102,5 @@ References (quick links)
 - [src/trigger/llm-execute.ts](src/trigger/llm-execute.ts)
 - [src/lib/demoWorkflows.ts](src/lib/demoWorkflows.ts)
 
-License
-This repository does not contain a license file. Add one (e.g., MIT) if you want to allow others to use the code.
+<!-- License
+This repository does not contain a license file. Add one (e.g., MIT) if you want to allow others to use the code. -->
