@@ -1,13 +1,14 @@
-import { Pool } from 'pg';
+import { Pool } from "pg";
 
-// 🔍 DEBUGGING: Print the URL to the server console
-console.log("🔍 CONNECTION STRING:", process.env.DATABASE_URL);
+const connectionString = process.env.DATABASE_URL || "";
+console.log("🔍 CONNECTION STRING:", connectionString?.replace(/:(\/\/.+:).+@/, "$1<redacted>@"));
 
-const useSsl = !!process.env.DATABASE_URL && process.env.DATABASE_URL.includes('supabase.co');
+const useSsl = connectionString.includes("supabase.co") || connectionString.includes("sslmode=require");
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: useSsl ? { rejectUnauthorized: false } : false,
+    connectionString,
+    ssl: useSsl ? { rejectUnauthorized: false } : undefined,
 });
 
 export const query = (text: string, params?: any[]) => pool.query(text, params);
+export default pool;

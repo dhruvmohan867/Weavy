@@ -1,3 +1,4 @@
+import { join } from "path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -12,6 +13,11 @@ const nextConfig: NextConfig = {
         hostname: "assets.weavy.ai", // Adding this just in case you use images from their asset server too
       },
     ],
+  },
+  reactStrictMode: true,
+  // ensure Turbopack picks the correct workspace root
+  turbopack: {
+    root: __dirname,
   },
 };
 
