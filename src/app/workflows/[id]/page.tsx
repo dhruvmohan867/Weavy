@@ -134,3 +134,57 @@ export default function EditorPage() {
 		</div>
 	);
 }
+
+// generator client {
+//   provider = "prisma-client-js"
+// }
+
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL")
+// }
+
+// enum RunStatus {
+//   PENDING
+//   EXECUTING
+//   COMPLETED
+//   FAILED
+//   CANCELED
+// }
+
+// model Workflow {
+//   id        String   @id @default(cuid())
+//   name      String
+//   userId    String?
+//   data      Json
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   runs      WorkflowRun[]
+// }
+
+// model WorkflowRun {
+//   id          String      @id @default(cuid())
+//   workflow    Workflow    @relation(fields: [workflowId], references: [id])
+//   workflowId  String
+//   status      RunStatus   @default(PENDING)
+//   startedAt   DateTime?
+//   finishedAt  DateTime?
+//   durationMs  Int?
+//   metadata    Json?
+//   createdAt   DateTime    @default(now())
+
+//   nodeResults NodeResult[]
+// }
+
+// model NodeResult {
+//   id         String      @id @default(cuid())
+//   run        WorkflowRun @relation(fields: [runId], references: [id])
+//   runId      String
+//   nodeId     String
+//   status     RunStatus   @default(PENDING)
+//   output     Json?
+//   error      String?
+//   durationMs Int?
+//   createdAt  DateTime    @default(now())
+// }
