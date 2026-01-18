@@ -1,59 +1,107 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { z } from "zod";
+import { NextResponse } from "next/server";
 
-import { triggerClient } from "@/trigger/client"; // ✅ your client instance
-import type { LLMExecutePayload } from "@/trigger/llm-execute";
+export const runtime = "nodejs"; // ✅ Required for Node libraries like @google/generative-ai
 
-const schema = z.object({
-  model: z.string().min(1),
-  prompt: z.string().min(1),
-  systemPrompt: z.string().optional(),
-  imageUrls: z.array(z.string()).optional(),
-  temperature: z.number().min(0).max(2).optional(),
-  nodeId: z.string().min(1),
-  workflowId: z.string().optional(),
-});
+type LLMExecutePayload = {
+  model: string;
+  prompt: string;
+  systemPrompt?: string;
+  imageUrls?: string[];
+  temperature?: number;
+  userId?: string;
+  nodeId?: string;
+  workflowId?: string;
+};
 
-export async function POST(request: NextRequest) {
+function buildError(message: string, status = 400) {
+  return NextResponse.json(
+    { ok: false, error: message },
+    { status }
+  );
+}
+
+export async function POST(req: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+    const body = (await req.json()) as LLMExecutePayload;
+
+    const modelName = body?.model;
+    const prompt = body?.prompt;
+
+    if (!modelName || !prompt) {
+      return buildError("Missing required fields: model and prompt");
     }
 
-    const body = schema.parse(await request.json());
+    if (!process.env.GEMINI_API_KEY) {
+      return buildError("GEMINI_API_KEY missing in .env", 500);
+    }
 
-    const payload: LLMExecutePayload = {
-      userId,
-      workflowId: body.workflowId,
-      nodeId: body.nodeId,
-      model: body.model,
-      prompt: body.prompt,
-      systemPrompt: body.systemPrompt,
-      imageUrls: body.imageUrls,
-      temperature: body.temperature,
-    };
+    // ✅ Import Gemini SDK only on server
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
 
-    // ✅ trigger the task properly
-    const handle = await triggerClient.trigger({
-      id: "llm-execute",
-      payload,
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: modelName });
+
+    const parts: any[] = [];
+
+    // System prompt (optional)
+    if (body.systemPrompt?.trim()) {
+      parts.push({
+        text: `System Instructions: ${body.systemPrompt}\n\n`,
+      });
+    }
+
+    // Main prompt
+    parts.push({ text: prompt });
+
+    // ✅ Images (optional) - Only supports base64 "data:" URLs
+    if (body.imageUrls?.length) {
+      for (let i = 0; i < body.imageUrls.length; i++) {
+        const imageUrl = body.imageUrls[i];
+
+        const matches = imageUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+
+        if (matches?.length === 3) {
+          const mimeType = matches[1];
+          const base64Data = matches[2];
+
+          parts.push({
+            inlineData: {
+              data: base64Data,
+              mimeType,
+            },
+          });
+        }
+      }
+    }
+
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts }],
+      generationConfig: {
+        temperature: body.temperature ?? 0.7,
+        maxOutputTokens: 8192,
+      },
     });
+
+    const text = result.response.text();
 
     return NextResponse.json({
-      success: true,
-      runId: handle.id,
+      ok: true,
+      text,
+      model: modelName,
+      nodeId: body.nodeId ?? null,
+      workflowId: body.workflowId ?? null,
+      timestamp: new Date().toISOString(),
+      usage: result.response.usageMetadata ?? null,
     });
-  } catch (error: any) {
-    console.error("LLM execute route error:", error);
+  } catch (err: any) {
+    console.error("❌ /api/llm/execute error:", err);
+
     return NextResponse.json(
-      { success: false, error: error?.message || "Failed to trigger LLM" },
+      {
+        ok: false,
+        error: err?.message || "Unknown error occurred",
+      },
       { status: 500 }
     );
   }
 }
-

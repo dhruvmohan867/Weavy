@@ -64,7 +64,11 @@ export async function loadWorkflowAction(id: string) {
             return { success: false, error: "Unauthorized. Please sign in." };
         }
 
-        const sql = `SELECT name, data, user_id FROM workflows WHERE id = $1`;
+        const sql = `
+        SELECT "name", "data", "userId"
+        FROM "Workflow"
+         WHERE "id" = $1
+        `;
         const result = await query(sql, [id]);
 
         if (result.rows.length === 0) {
@@ -96,11 +100,11 @@ export async function getAllWorkflowsAction() {
             return { success: false, error: "Unauthorized. Please sign in.", workflows: [] };
         }
 
-        const sql = `
-            SELECT id, name, created_at, updated_at 
-            FROM workflows 
-            WHERE user_id = $1
-            ORDER BY updated_at DESC
+       const sql = `
+        SELECT *
+        FROM "Workflow"
+        WHERE "userId" = $1
+        ORDER BY "updatedAt" DESC
         `;
         const result = await query(sql, [userId]);
 

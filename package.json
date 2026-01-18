@@ -6,12 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "trigger:dev": "trigger.dev dev"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.7",
     "@google/generative-ai": "^0.24.1",
-    "@trigger.dev/sdk": "^3.3.17",
+
+    "@trigger.dev/build": "3.3.17",
+    "@trigger.dev/cli": "3.3.12",
+    "@trigger.dev/sdk": "3.3.17",
+
     "@types/uuid": "^10.0.0",
     "@xyflow/react": "^12.10.0",
     "clsx": "^2.1.1",
@@ -34,8 +39,6 @@
   "devDependencies": {
     "@prisma/client": "^5.22.0",
     "@tailwindcss/postcss": "^4",
-    "@trigger.dev/build": "^3.3.17",
-    "@trigger.dev/cli": "latest",
     "@types/node": "^20",
     "@types/pg": "^8.16.0",
     "@types/react": "^19",
